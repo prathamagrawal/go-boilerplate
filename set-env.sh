@@ -1,0 +1,1 @@
+set -a && source devops/config.env && source config.env && set +a
