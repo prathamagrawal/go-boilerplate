@@ -10,7 +10,6 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	// Use "%s" to print the string value of ENVIRONMENT
 	fmt.Println(conf.ENVIRONMENT)
 	fmt.Println(conf.DEBUG)
 	for _, item := range conf.SERVICES {
