@@ -10,6 +10,6 @@ func LoadConfig() {
 	viper.SetConfigType("env")
 	viper.AddConfigPath(".")
 	if err := viper.ReadInConfig(); err != nil {
-		panic(fmt.Errorf("Fatal error config file: %w", err))
+		panic(fmt.Errorf("fatal error config file: %w", err))
 	}
 }
