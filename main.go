@@ -2,17 +2,11 @@ package main
 
 import (
 	"fmt"
+	"github.com/spf13/viper"
 	"main/config"
 )
 
 func main() {
-	conf, err := config.LoadConfig()
-	if err != nil {
-		panic(err)
-	}
-	fmt.Println(conf.ENVIRONMENT)
-	fmt.Println(conf.DEBUG)
-	for _, item := range conf.SERVICES {
-		fmt.Println(item)
-	}
+	config.LoadConfig()
+	fmt.Println(viper.GetBool("DEBUG"))
 }
