@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/spf13/viper"
-	"log"
 	"main/config"
 	"main/utils"
 )
@@ -103,7 +103,23 @@ func main() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
+			messageData := make(map[string]interface{})
+			if err := json.Unmarshal(d.Body, &messageData); err != nil {
+				logger.Errorf("Failed to decode JSON: %s", err)
+				continue
+			}
+
+			logger.Infof("Item: %+v received on routing key %s with exchange %s", messageData, d.RoutingKey, d.Exchange)
+			if d.RoutingKey == "routing.key1.1" {
+				// do something
+				logger.Info("Message received on routing key routing.key1.1")
+			} else if d.RoutingKey == "routing.key1.2" {
+				logger.Error("Message received on routing key routing.key1.2")
+			} else {
+				// do something
+				logger.Error("Message received on routing key routing.key2.1")
+			}
+
 		}
 	}()
 
