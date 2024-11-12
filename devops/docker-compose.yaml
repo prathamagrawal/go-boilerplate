@@ -1,14 +1,22 @@
-version: '3'
+version: '3.9'
 services:
-  rabbitmq:
-    image: rabbitmq:management
-    container_name: rabbitmq
-    environment:
-      RABBITMQ_DEFAULT_USER: consoleuser
-      RABBITMQ_DEFAULT_PASS: buddy123
-      RABBITMQ_DEFAULT_VHOST: /
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    restart: always
+    rabbitmq:
+        image: rabbitmq:management
+        container_name: rabbitmq
+        environment:
+            RABBITMQ_DEFAULT_USER: consoleuser
+            RABBITMQ_DEFAULT_PASS: buddy123
+            RABBITMQ_DEFAULT_VHOST: /
+        ports:
+            - "5672:5672"
+            - "15672:15672"
+        restart: always
+
+    redis:
+        image: redis:latest
+        container_name: redis
+        ports:
+            - "6379:6379"
+        restart: unless-stopped
+        command: [ "redis-server", "--appendonly", "yes" ]
 

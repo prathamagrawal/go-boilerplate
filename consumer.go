@@ -1,8 +1,8 @@
 package main
 
 import (
+	"encoding/json"
 	"github.com/spf13/viper"
-	"log"
 	"main/config"
 	"main/utils"
 )
@@ -17,41 +17,40 @@ type Queue struct {
 	Bindings []Binding `json:"bindings"`
 }
 
-func main() {
+var Exchanges = []map[string]interface{}{
+	{"name": "test_exchange1", "type": "direct", "durable": true},
+	{"name": "test_exchange2", "type": "direct", "durable": true},
+}
 
-	EXCHANGES := []map[string]interface{}{
-		{"name": "test_exchange1", "type": "direct", "durable": true},
-		{"name": "test_exchange2", "type": "direct", "durable": true},
-	}
-
-	queues := []Queue{
-		{
-			Name:    "go_queue",
-			Durable: true,
-			Bindings: []Binding{
-				{
-					Exchange:   "test_exchange1",
-					RoutingKey: "routing.key1.1",
-				},
-				{
-					Exchange:   "test_exchange1",
-					RoutingKey: "routing.key1.2",
-				},
-				{
-					Exchange:   "test_exchange2",
-					RoutingKey: "routing.key2.1",
-				},
+var Queues = []Queue{
+	{
+		Name:    "go_queue",
+		Durable: true,
+		Bindings: []Binding{
+			{
+				Exchange:   "test_exchange1",
+				RoutingKey: "routing.key1.1",
+			},
+			{
+				Exchange:   "test_exchange1",
+				RoutingKey: "routing.key1.2",
+			},
+			{
+				Exchange:   "test_exchange2",
+				RoutingKey: "routing.key2.1",
 			},
 		},
-	}
+	},
+}
+
+func main() {
 
 	config.LoadConfig()
 	logger := config.NewLogger(config.DefaultLoggerConfig)
 	logger.Info("Starting consumer with the following pubsub broker: ", viper.GetString("PUBSUB"))
 	channelObject := utils.GetQueueConnection()
 
-	// Declaring Exchanges with the configuration provided above:
-	for _, exchange := range EXCHANGES {
+	for _, exchange := range Exchanges {
 		exchange_name := exchange["name"].(string)
 		exchange_type := exchange["type"].(string)
 		exchange_durable := exchange["durable"].(bool)
@@ -70,7 +69,7 @@ func main() {
 	}
 
 	queueObject, err := channelObject.QueueDeclare(
-		queues[0].Name,
+		Queues[0].Name,
 		false,
 		false,
 		true,
@@ -80,7 +79,7 @@ func main() {
 	if err != nil {
 		utils.FailOnError(err, "Failed to create queue")
 	}
-	for _, queue := range queues {
+	for _, queue := range Queues {
 		for _, binding := range queue.Bindings {
 			err := channelObject.QueueBind(queueObject.Name, binding.RoutingKey, binding.Exchange, false, nil)
 			if err != nil {
@@ -104,7 +103,23 @@ func main() {
 
 	go func() {
 		for d := range msgs {
-			log.Printf(" [x] %s", d.Body)
+			messageData := make(map[string]interface{})
+			if err := json.Unmarshal(d.Body, &messageData); err != nil {
+				logger.Errorf("Failed to decode JSON: %s", err)
+				continue
+			}
+
+			logger.Infof("Item: %+v received on routing key %s with exchange %s", messageData, d.RoutingKey, d.Exchange)
+			if d.RoutingKey == "routing.key1.1" {
+				// do something
+				logger.Info("Message received on routing key routing.key1.1")
+			} else if d.RoutingKey == "routing.key1.2" {
+				logger.Error("Message received on routing key routing.key1.2")
+			} else {
+				// do something
+				logger.Error("Message received on routing key routing.key2.1")
+			}
+
 		}
 	}()
 
