@@ -1,4 +1,4 @@
-module main
+module github.com/prathamagrawal/goboilerplate
 
 go 1.23.1
 
